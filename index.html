@@ -1,0 +1,449 @@
+<!DOCTYPE html>
+<html lang="it">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Gestione Cassa</title>
+  <link rel="manifest" href="manifest.json">
+  <meta name="theme-color" content="#4CAF50">
+  <style>
+    body {
+      font-family: Arial, sans-serif;
+      background: #f4f4f4;
+      padding: 2rem;
+      color: #333;
+    }
+    h1 {
+      text-align: center;
+      margin-bottom: 1rem;
+    }
+    table {
+      width: 100%;
+      border-collapse: collapse;
+      margin-bottom: 2rem;
+      background-color: white;
+      box-shadow: 0 0 5px rgba(0, 0, 0, 0.1);
+    }
+    th,
+    td {
+      padding: 0.75rem;
+      border-bottom: 1px solid #ddd;
+    }
+    th {
+      background-color: #333;
+      color: white;
+      text-align: left;
+    }
+    input[type="number"] {
+      width: 100%;
+      padding: 0.5rem;
+      border: 1px solid #ccc;
+      border-radius: 4px;
+      font-size: 1rem;
+      max-width: 100%;
+      box-sizing: border-box;
+    }
+    .readonly {
+      background-color: #eee;
+    }
+    .section-title {
+      background-color: #e0e0e0;
+      font-weight: bold;
+      padding: 0.5rem;
+      text-align: left;
+      margin-top: 2rem;
+    }
+    .buttons {
+      display: flex;
+      gap: 1rem;
+      justify-content: center;
+      margin-top: 1rem;
+    }
+    button {
+      padding: 0.75rem 2rem;
+      font-size: 1rem;
+      font-weight: bold;
+      border: none;
+      border-radius: 8px;
+      color: white;
+      cursor: pointer;
+      transition: background 0.2s ease;
+      -webkit-transition: background 0.2s ease; /* iOS compatibility */
+    }
+    button:hover {
+      opacity: 0.9;
+    }
+    .add-btn {
+      background-color: #4caf50;
+    }
+    .del-btn {
+      background-color: #f44336;
+    }
+    .reset-btn {
+      background-color: #9e9e9e;
+    }
+    .pdf-btn {
+      background-color: #2196f3;
+    }
+
+    input[type="number"]:focus {
+      outline: none;
+      border-color: #2196f3;
+      box-shadow: 0 0 3px rgba(33, 150, 243, 0.5);
+      transition: 0.2s ease;
+      -webkit-transition: 0.2s ease; /* iOS compatibility */
+    }
+  </style>
+</head>
+<body>
+  <h1 style="text-align: center; font-size: 2rem;">
+    <span style="display: inline-block; vertical-align: baseline;">Gestione Cassa</span>
+    <span style="font-size: 2.2rem; vertical-align: baseline;">💰</span>
+  </h1>
+  <table id="main-table">
+    <thead>
+      <tr>
+        <th>Descrizione</th>
+        <th></th>
+        <th>Importo (€)</th>
+      </tr>
+    </thead>
+    <tbody>
+      <tr>
+        <td>Fondo Cassa (€)</td>
+        <td></td>
+        <td><input type="number" id="fondoCassa" step="0.01" pattern="[0-9]*" /></td>
+      </tr>
+      <tr>
+        <td>Totale complessivo vendite (€)</td>
+        <td></td>
+        <td><input type="number" id="vendite" step="0.01" pattern="[0-9]*" /></td>
+      </tr>
+      <tr>
+        <td>POS risultante dalla Banca (€)</td>
+        <td></td>
+        <td><input type="number" id="pos" step="0.01" pattern="[0-9]*" /></td>
+      </tr>
+    </tbody>
+  </table>
+
+  <div class="section-title">Pagamento fornitori con scontrino o fattura</div>
+  <table id="fornitori-scontrino-table">
+    <tbody id="fornitoriScontrinoBody">
+      <tr>
+        <td>Importo (€)</td>
+        <td><input type="number" class="forn-scontrino" step="0.01" pattern="[0-9]*" /></td>
+        <td><button class="del-btn" onclick="removeRow(this)">Rimuovi</button></td>
+      </tr>
+    </tbody>
+  </table>
+
+  <div class="buttons">
+    <button class="add-btn" id="addScontrino">Aggiungi Riga</button>
+  </div>
+
+  <div class="section-title">Pagamento fornitori cash</div>
+  <table id="fornitori-cash-table">
+    <tbody id="fornitoriCashBody">
+      <tr>
+        <td>Importo (€)</td>
+        <td><input type="number" class="forn-cash" step="0.01" pattern="[0-9]*" /></td>
+        <td><button class="del-btn" onclick="removeRow(this)">Rimuovi</button></td>
+      </tr>
+    </tbody>
+  </table>
+
+  <div class="buttons">
+    <button class="add-btn" id="addCash">Aggiungi Riga</button>
+  </div>
+
+  <div class="section-title">Soldi in cassa (Monete & Banconote)</div>
+  <table id="quantita-table">
+    <tbody id="quantitaBody">
+      <tr>
+        <td>0,10 €</td>
+        <td><input type="number" class="quantita" step="1" pattern="[0-9]*" /></td>
+        <td></td>
+      </tr>
+      <tr>
+        <td>0,20 €</td>
+        <td><input type="number" class="quantita" step="1" pattern="[0-9]*" /></td>
+        <td></td>
+      </tr>
+      <tr>
+        <td>0,50 €</td>
+        <td><input type="number" class="quantita" step="1" pattern="[0-9]*" /></td>
+        <td></td>
+      </tr>
+      <tr>
+        <td>1,00 €</td>
+        <td><input type="number" class="quantita" step="1" pattern="[0-9]*" /></td>
+        <td></td>
+      </tr>
+      <tr>
+        <td>2,00 €</td>
+        <td><input type="number" class="quantita" step="1" pattern="[0-9]*" /></td>
+        <td></td>
+      </tr>
+      <tr>
+        <td>5,00 €</td>
+        <td><input type="number" class="quantita" step="1" pattern="[0-9]*" /></td>
+        <td></td>
+      </tr>
+      <tr>
+        <td>10,00 €</td>
+        <td><input type="number" class="quantita" step="1" pattern="[0-9]*" /></td>
+        <td></td>
+      </tr>
+      <tr>
+        <td>20,00 €</td>
+        <td><input type="number" class="quantita" step="1" pattern="[0-9]*" /></td>
+        <td></td>
+      </tr>
+      <tr>
+        <td>50,00 €</td>
+        <td><input type="number" class="quantita" step="1" pattern="[0-9]*" /></td>
+        <td></td>
+      </tr>
+      <tr>
+        <td>100,00 €</td>
+        <td><input type="number" class="quantita" step="1" pattern="[0-9]*" /></td>
+        <td></td>
+      </tr>
+    </tbody>
+  </table>
+
+  <div class="section-title">Totali Calcolati</div>
+  <table>
+    <tbody>
+      <tr>
+        <td><strong>Tot. Fornitori (Scontrino) (€)</strong></td>
+		<td></td>
+		<td><input type="number" id="totScontrino" class="readonly" readonly /></td>
+	  </tr>
+	  <tr>	
+		<td><strong>Tot. Fornitori (Cash) (€)</strong></td>
+		<td></td>
+		<td><input type="number" id="totCash" class="readonly" readonly /></td>
+	  </tr>
+	  <tr>
+        <td><strong>Tot. Monete (€)</strong></td>
+		<td></td>
+		<td><input type="number" id="totCassaMonete" class="readonly" readonly /></td>
+	  </tr>
+	  <tr>
+		<td><strong>Tot. Banconote (€)</strong></td>
+		<td></td>
+		<td><input type="number" id="totCassaBanconote" class="readonly" readonly /></td>
+	  </tr>
+    </tbody>
+  </table>
+
+  <div class="section-title">Calcoli Automatici Finali</div>
+  <table>
+    <tbody>
+      <tr>
+        <td><strong>Totale incasso reale (al netto del Fondo Cassa) (€)</strong></td>
+        <td></td>
+        <td><input type="number" id="incassoReale" class="readonly" readonly /></td>
+      </tr>
+      <tr>
+        <td><strong>Residuo (€)</strong></td>
+        <td></td>
+        <td><input type="number" id="residuo" class="readonly" readonly /></td>
+      </tr>
+      <tr>
+        <td><strong>Somma da versare in Banca (€)</strong></td>
+        <td></td>
+        <td><input type="number" id="versareBanca" class="readonly" readonly /></td>
+      </tr>
+      <tr>
+        <td><strong>Reintegro Cassa (€)</strong></td>
+        <td></td>
+        <td><input type="number" id="reintegroCassa" class="readonly" readonly /></td>
+      </tr>
+    </tbody>
+  </table>
+  <div class="buttons">
+    <button class="reset-btn" id="resetButton" onclick="resetAll()">Reset</button>
+    <button class="pdf-btn" onclick="exportPDF()">Esporta PDF</button>
+  </div>
+
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
+  <script>
+    //serviceWorker
+    if ('serviceWorker' in navigator) {
+      navigator.serviceWorker.register('service-worker.js')
+        .then(() => console.log("Service Worker registrato!"))
+        .catch(error => console.error("Errore SW:", error));
+    }  
+  
+    //Formatta i numeri con il formato € XX,XX
+	function formatCurrencyInput(input) {
+	  if (input.classList.contains('quantita')) {
+		input.addEventListener('focus', () => {
+		  if (input.value === '0') input.value = '';
+		});
+		input.addEventListener('blur', () => {
+		  if (input.value === '' || isNaN(input.value)) input.value = '0';
+		});
+		return;
+	  }
+
+	  input.addEventListener('focus', () => {
+		if (input.value === '0.00') input.value = '';
+	  });
+
+	  input.addEventListener('blur', () => {
+		let val = parseFloat(input.value);
+		if (!isNaN(val)) {
+		  input.value = val.toFixed(2);
+		} else {
+		  input.value = '0.00';
+		}
+	  });
+	}
+  
+    function addFornitore(type) {
+      const tbody = document.getElementById(type === 'scontrino' ? 'fornitoriScontrinoBody' : 'fornitoriCashBody');
+      const row = document.createElement('tr');
+      row.innerHTML = `
+        <td>Importo (€)</td>
+        <td><input type="number" class="forn-${type}" step="0.01" /></td>
+        <td><button class="del-btn" onclick="removeRow(this)">Rimuovi</button></td>
+      `;
+      tbody.appendChild(row);
+      bindInputs();
+    }
+
+    function removeRow(btn) {
+      btn.closest('tr').remove();
+      calculateTotals();
+    }
+
+    function getSum(selector) {
+      return [...document.querySelectorAll(selector)]
+        .reduce((sum, input) => sum + (parseFloat(input.value) || 0), 0);
+    }
+
+    function calculateTotals() {
+      const fondo = parseFloat(document.getElementById('fondoCassa').value) || 0;
+      const vendite = parseFloat(document.getElementById('vendite').value) || 0;
+      const pos = parseFloat(document.getElementById('pos').value) || 0;
+      const scontrino = getSum('.forn-scontrino');
+      const cash = getSum('.forn-cash');
+
+      document.getElementById('totScontrino').value = scontrino.toFixed(2);
+      document.getElementById('totCash').value = cash.toFixed(2);
+
+      const quantitaInputs = document.querySelectorAll('.quantita');
+	  
+      const valoriNominali = [0.10, 0.20, 0.50, 1, 2, 5, 10, 20, 50, 100];
+	  let totMoneteBanconoteCassa = 0;
+	  let sumC11_C15 = 0;
+	  let sumC16_C20 = 0;
+	  quantitaInputs.forEach((el, i) => {
+		const quantita = parseFloat(el.value) || 0;
+		if (i >= 0 && i <= 4) {
+          sumC11_C15 += quantita * valoriNominali[i] || 0;
+        }
+		else {
+		  sumC16_C20 += quantita * valoriNominali[i] || 0;
+		}
+	  });
+	  
+	  document.getElementById('totCassaMonete').value = sumC11_C15.toFixed(2);
+	  document.getElementById('totCassaBanconote').value = sumC16_C20.toFixed(2);
+	  
+	  totMoneteBanconoteCassa = sumC11_C15 + sumC16_C20;
+	  
+	  let sumC3_C20 = pos + scontrino + cash + totMoneteBanconoteCassa;
+
+      const incassoReale = sumC3_C20 - fondo;
+      const residuo = incassoReale - (vendite + cash);
+      const versareBanca = Math.max(0, vendite - (pos + scontrino));
+      const reintegroCassa = fondo - sumC11_C15;
+
+      document.getElementById('incassoReale').value = incassoReale.toFixed(2);
+      document.getElementById('residuo').value = residuo.toFixed(2);
+      document.getElementById('versareBanca').value = versareBanca.toFixed(2);
+      document.getElementById('reintegroCassa').value = reintegroCassa.toFixed(2);
+
+    }
+
+    function bindInputs() {
+      ['fondoCassa', 'vendite', 'pos'].forEach(id =>
+        document.getElementById(id).addEventListener('input', calculateTotals));
+      
+	  ['.forn-scontrino', '.forn-cash', '.quantita'].forEach(cls => {
+        Array.from(document.querySelectorAll(cls)).forEach(el =>
+          el.addEventListener('input', calculateTotals));
+      });
+	  
+	  Array.from(document.querySelectorAll('input[type="number"]')).forEach(input => {
+	    formatCurrencyInput(input);
+	  });
+	
+    }
+	
+	function resetToZero() {
+      Array.from(document.querySelectorAll('input[type="number"]')).forEach(input => {
+		if (input.classList.contains('quantita')) {
+		  input.value = '0';
+		} else {
+		  input.value = '0.00';
+		}
+	  });
+    }
+
+    function resetAll() {
+      Array.from(document.querySelectorAll('input[type="number"]')).forEach(input => input.value = '');
+      calculateTotals();
+	  resetToZero();
+    }
+	
+    async function exportPDF() {
+      const { jsPDF } = window.jspdf;
+      const doc = new jsPDF();
+      
+	  const now = new Date();
+	  const timestamp = now.toLocaleString('it-IT', {
+	    day: '2-digit', month: '2-digit', year: 'numeric',
+	    hour: '2-digit', minute: '2-digit'
+	  });
+	  doc.text(`Riepilogo Gestione Cassa (${timestamp})`, 10, 10);
+      let y = 20;
+      const fields = [
+        ["Fondo Cassa", document.getElementById('fondoCassa').value],
+		["Totale Vendite", document.getElementById('vendite').value],
+		["POS", document.getElementById('pos').value],
+		["Tot. Fornitori Scontrino", document.getElementById('totScontrino').value],
+		["Tot. Fornitori Cash", document.getElementById('totCash').value],
+		["Tot. Monete Disponibili", document.getElementById('totCassaMonete').value],
+		["Tot. Banconote Disponibili", document.getElementById('totCassaBanconote').value],
+		["Totale incasso reale", document.getElementById('incassoReale').value],
+		["Residuo", document.getElementById('residuo').value],
+		["Somma da versare in Banca", document.getElementById('versareBanca').value],
+        ["Reintegro cassa", document.getElementById('reintegroCassa').value],
+      ];
+      fields.forEach(([label, val]) => {
+        doc.text(`${label}: € ${val}`, 10, y);
+        y += 10;
+      });
+      
+	  doc.save(`gestione_cassa_${now.toISOString().slice(0,16).replace(/[:T]/g, '-')}.pdf`);
+    }
+
+    window.onload = () => {
+	  bindInputs();
+	  resetToZero();
+	  calculateTotals();
+	};
+  
+    // Adjustments for iOS compatibility
+    document.getElementById('addScontrino').addEventListener('click', () => addFornitore('scontrino'));
+    document.getElementById('addCash').addEventListener('click', () => addFornitore('cash'));
+    document.getElementById('resetButton').addEventListener('click', resetAll);
+  </script>
+</body>
+</html>
